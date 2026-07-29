@@ -59,6 +59,41 @@ number of weeks. A value stays `Provisional` until the relevant quarterly CPI
 data comes out and the adjustment factor is recalculated — so the gap between
 Provisional and Final can be up to several months, not a short, predictable window.
 
+**Update (confirmed by diff, 30 Jul 2026):** the quarterly cycle governs the
+*Provisional → Final* transition, but Provisional values themselves can still
+shift **week to week** before that transition happens. Comparing a snapshot
+from 17 Jul against the file after the 24 Jul update showed real revisions to
+`Importer cost`, `Importer margin`, `Dubai crude price` for the most recent
+weeks — small movements, but real, not just new rows appended. Don't treat
+Provisional as "stable until the quarter ends" — it's provisional in both
+senses: subject to quarterly re-basing *and* to ordinary week-to-week
+correction.
+
+## `Importer margin trend` — excluded from revision tracking
+
+A full diff between two snapshots (17 Jul vs 24 Jul) returned **7,010** changed
+rows. The overwhelming majority — **6,969** — were `Importer margin trend`,
+spanning the *entire* history back to 2004-04-23, including rows marked
+`Final`.
+
+This is almost certainly a LOESS-smoothing artifact, not a genuine revision.
+LOESS refits the whole curve when a new point is added, so every historical
+point shifts by a tiny amount — even ones long since "finalized." The `Status`
+field appears to apply to the raw metrics (cost, margin, board price, etc.),
+not to this derived, globally-recomputed column.
+
+**Decision: exclude `Importer margin trend` from any snapshot/revision
+tracking.** Including it would generate a near-total-history "revision" every
+single week — noise, not signal, and it would defeat the purpose of tracking
+revisions at all (real revisions would be buried under ~7,000 cosmetic ones).
+If the trend line itself is ever needed, recompute it locally in gold from the
+raw `Importer margin` values rather than trusting MBIE's version to stay
+stable — since evidently it never fully does.
+
+Everything else in the diff was small and expected: single-digit row counts,
+all within the most recent 1–2 weeks, all still `Provisional` — ordinary
+week-to-week correction, not a data quality problem.
+
 ## Known structural changes
 
 - **7 May 2025** — MBIE switched to the current long/narrow format. The old
@@ -116,5 +151,8 @@ fuel-stock-and-shipping-updates
   `Value` + `Status`) to track Provisional → Final revisions over time —
   the "current" file alone can't reveal this history, as the March–July gap
   reconstruction shows.
+- **Exclude `Importer margin trend` from the snapshot's `check_cols`** (or
+  snapshot it separately, clearly labeled as noise). Including it turns every
+  weekly snapshot run into a near-full-history revision event — see above.
 - **Migration boundaries** (format change, reweighting date, pause window)
   should live in dbt vars/seeds, not hardcoded inline in multiple models.
