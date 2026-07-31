@@ -4,6 +4,12 @@ An investigation into how long it takes for a global oil price shock to reach
 the pump in New Zealand — triggered by the 2026 Middle East crisis, and
 checked against three earlier price shocks to see whether the pattern holds.
 
+> **Update — August 2026:** This project is being rebuilt on Azure/Microsoft
+> Fabric, with dbt handling transformations and a proper bronze/silver/gold
+> pipeline replacing the single-script workflow below. The analysis here
+> remains as the original baseline — same methodology, same findings.
+> Rebuild: [nz-fuel-price-azure-fabric](https://github.com/AndRayFS/nz-fuel-price-azure-fabric)
+
 ## Purpose
 
 Compares the lag between crude oil price movements and NZ retail fuel prices
